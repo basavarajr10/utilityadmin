@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('user_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.users.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.user.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.user.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.user.title_singular') }} {{ trans('global.list') }}</span>
+@can('user_create')
+<a href="{{ route('admin.users.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.user.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <div class="table-responsive">

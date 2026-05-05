@@ -40,6 +40,9 @@ class CommissionSetting extends Model
         'gas'             => 'Gas',
         'broadband'       => 'Broadband',
         'bus'             => 'Bus',
+        'dmt'             => 'DMT (Money Transfer)',
+        'bank_payout'     => 'Bank Payout',
+        'upi_payout'      => 'UPI Payout',
     ];
 
     protected function serializeDate(DateTimeInterface $date)

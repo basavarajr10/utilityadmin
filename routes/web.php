@@ -76,6 +76,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::resource('transactions', 'TransactionsController');
 
     // Commission Settings
+    Route::put('commission-settings/bulk-update', 'CommissionSettingsController@bulkUpdate')->name('commission-settings.bulk-update');
     Route::delete('commission-settings/destroy', 'CommissionSettingsController@massDestroy')->name('commission-settings.massDestroy');
     Route::resource('commission-settings', 'CommissionSettingsController');
 
@@ -84,8 +85,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::resource('notifications', 'NotificationsController');
 
     // App Settings
-    Route::delete('app-settings/destroy', 'AppSettingsController@massDestroy')->name('app-settings.massDestroy');
-    Route::resource('app-settings', 'AppSettingsController');
+    Route::put('app-settings', 'AppSettingsController@update')->name('app-settings.update');
+    Route::resource('app-settings', 'AppSettingsController', ['only' => ['index']]);
 
     Route::get('system-calendar', 'SystemCalendarController@index')->name('systemCalendar');
     Route::get('global-search', 'GlobalSearchController@search')->name('globalSearch');

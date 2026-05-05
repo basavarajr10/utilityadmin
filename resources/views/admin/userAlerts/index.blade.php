@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('user_alert_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.user-alerts.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.userAlert.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.userAlert.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.userAlert.title_singular') }} {{ trans('global.list') }}</span>
+@can('user_alert_create')
+<a href="{{ route('admin.user-alerts.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.userAlert.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <table class=" table table-bordered table-striped table-hover ajaxTable datatable datatable-UserAlert">

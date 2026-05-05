@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('withdrawal_request_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.withdrawal-requests.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.withdrawalRequest.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.withdrawalRequest.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.withdrawalRequest.title_singular') }} {{ trans('global.list') }}</span>
+@can('withdrawal_request_create')
+<a href="{{ route('admin.withdrawal-requests.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.withdrawalRequest.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <div class="table-responsive">

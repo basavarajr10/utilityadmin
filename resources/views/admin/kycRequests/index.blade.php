@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('kyc_request_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.kyc-requests.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.kycRequest.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.kycRequest.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.kycRequest.title_singular') }} {{ trans('global.list') }}</span>
+@can('kyc_request_create')
+<a href="{{ route('admin.kyc-requests.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.kycRequest.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <table class=" table table-bordered table-striped table-hover ajaxTable datatable datatable-KycRequest">

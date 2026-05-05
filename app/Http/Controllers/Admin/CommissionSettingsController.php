@@ -7,6 +7,7 @@ use App\Http\Requests\MassDestroyCommissionSettingRequest;
 use App\Http\Requests\StoreCommissionSettingRequest;
 use App\Http\Requests\UpdateCommissionSettingRequest;
 use App\Models\CommissionSetting;
+use App\Models\Transaction;
 use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,34 +41,23 @@ class CommissionSettingsController extends Controller
                 ));
             });
 
-            $table->editColumn('id', function ($row) {
-                return $row->id ? $row->id : '';
-            });
-            $table->editColumn('service_type', function ($row) {
-                return $row->service_type ? CommissionSetting::SERVICE_TYPE_SELECT[$row->service_type] : '';
-            });
-            $table->editColumn('commission_pct', function ($row) {
-                return $row->commission_pct ? $row->commission_pct : '';
-            });
-            $table->editColumn('min_commission', function ($row) {
-                return $row->min_commission ? $row->min_commission : '';
-            });
-            $table->editColumn('max_commission', function ($row) {
-                return $row->max_commission ? $row->max_commission : '';
-            });
-            $table->editColumn('flat_charge', function ($row) {
-                return $row->flat_charge ? $row->flat_charge : '';
-            });
-            $table->editColumn('is_active', function ($row) {
-                return '<input type="checkbox" disabled ' . ($row->is_active ? 'checked' : null) . '>';
-            });
+            $table->editColumn('id', fn ($row) => $row->id ?? '');
+            $table->editColumn('service_type', fn ($row) => $row->service_type ? CommissionSetting::SERVICE_TYPE_SELECT[$row->service_type] : '');
+            $table->editColumn('commission_pct', fn ($row) => $row->commission_pct ?? '');
+            $table->editColumn('min_commission', fn ($row) => $row->min_commission ?? '');
+            $table->editColumn('max_commission', fn ($row) => $row->max_commission ?? '');
+            $table->editColumn('flat_charge', fn ($row) => $row->flat_charge ?? '');
+            $table->editColumn('is_active', fn ($row) => '<input type="checkbox" disabled ' . ($row->is_active ? 'checked' : '') . '>');
 
             $table->rawColumns(['actions', 'placeholder', 'is_active']);
 
             return $table->make(true);
         }
 
-        return view('admin.commissionSettings.index');
+        $commissions = CommissionSetting::all()->keyBy('service_type');
+        $todayCommission = Transaction::whereDate('created_at', today())->sum('commission_earned');
+
+        return view('admin.commissionSettings.index', compact('commissions', 'todayCommission'));
     }
 
     public function create()
@@ -79,7 +69,7 @@ class CommissionSettingsController extends Controller
 
     public function store(StoreCommissionSettingRequest $request)
     {
-        $commissionSetting = CommissionSetting::create($request->all());
+        CommissionSetting::create($request->all());
 
         return redirect()->route('admin.commission-settings.index');
     }
@@ -116,12 +106,20 @@ class CommissionSettingsController extends Controller
 
     public function massDestroy(MassDestroyCommissionSettingRequest $request)
     {
-        $commissionSettings = CommissionSetting::find(request('ids'));
-
-        foreach ($commissionSettings as $commissionSetting) {
-            $commissionSetting->delete();
-        }
+        CommissionSetting::find(request('ids'))->each->delete();
 
         return response(null, Response::HTTP_NO_CONTENT);
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        abort_if(Gate::denies('commission_setting_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        CommissionSetting::updateOrCreate(
+            ['service_type' => $request->service_type],
+            $request->only(['commission_pct', 'min_commission', 'max_commission', 'flat_charge', 'is_active'])
+        );
+
+        return redirect()->back()->with('success', 'Commission saved.');
     }
 }

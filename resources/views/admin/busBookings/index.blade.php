@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('bus_booking_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.bus-bookings.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.busBooking.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.busBooking.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.busBooking.title_singular') }} {{ trans('global.list') }}</span>
+@can('bus_booking_create')
+<a href="{{ route('admin.bus-bookings.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.busBooking.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <table class=" table table-bordered table-striped table-hover ajaxTable datatable datatable-BusBooking">

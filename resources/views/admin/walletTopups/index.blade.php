@@ -1,18 +1,12 @@
 @extends('layouts.admin')
 @section('content')
-@can('wallet_topup_create')
-    <div style="margin-bottom: 10px;" class="row">
-        <div class="col-lg-12">
-            <a class="btn btn-success" href="{{ route('admin.wallet-topups.create') }}">
-                {{ trans('global.add') }} {{ trans('cruds.walletTopup.title_singular') }}
-            </a>
-        </div>
-    </div>
-@endcan
 <div class="card">
     <div class="card-header">
-        {{ trans('cruds.walletTopup.title_singular') }} {{ trans('global.list') }}
-    </div>
+<span>{{ trans('cruds.walletTopup.title_singular') }} {{ trans('global.list') }}</span>
+@can('wallet_topup_create')
+<a href="{{ route('admin.wallet-topups.create') }}" class="btn-add-record"><i class="fas fa-plus"></i> {{ trans('global.add') }} {{ trans('cruds.walletTopup.title_singular') }}</a>
+@endcan
+</div>
 
     <div class="card-body">
         <table class=" table table-bordered table-striped table-hover ajaxTable datatable datatable-WalletTopup">
