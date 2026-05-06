@@ -594,6 +594,27 @@
             border-color: var(--primary-dark) !important;
         }
 
+        /* Action buttons in datatables — uniform size */
+        .btn-xs {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            padding: 5px 0 !important;
+            border-radius: 6px !important;
+            width: 80px !important;
+            display: inline-block !important;
+            text-align: center !important;
+            line-height: 1.4 !important;
+            border: none !important;
+            cursor: pointer !important;
+        }
+        .btn-xs.btn-primary { background: #002970 !important; color: #fff !important; }
+        .btn-xs.btn-primary:hover { background: #001a4d !important; color: #fff !important; }
+        .btn-xs.btn-info    { background: #0ea5e9 !important; color: #fff !important; }
+        .btn-xs.btn-info:hover { background: #0284c7 !important; color: #fff !important; }
+        .btn-xs.btn-danger  { background: #ef4444 !important; color: #fff !important; }
+        .btn-xs.btn-danger:hover { background: #dc2626 !important; color: #fff !important; }
+
         /* Sidebar collapse (AdminLTE pushmenu) */
         .sidebar-collapse .main-sidebar { width: 70px !important; }
         .sidebar-collapse .brand-text,

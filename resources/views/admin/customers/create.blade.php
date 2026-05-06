@@ -76,11 +76,8 @@
             </div>
             <div class="form-group">
                 <label for="referral_code">{{ trans('cruds.customer.fields.referral_code') }}</label>
-                <input class="form-control {{ $errors->has('referral_code') ? 'is-invalid' : '' }}" type="text" name="referral_code" id="referral_code" value="{{ old('referral_code', '') }}">
-                @if($errors->has('referral_code'))
-                    <span class="text-danger">{{ $errors->first('referral_code') }}</span>
-                @endif
-                <span class="help-block">{{ trans('cruds.customer.fields.referral_code_helper') }}</span>
+                <input class="form-control" type="text" id="referral_code" placeholder="Auto-generated from mobile number" readonly style="background:#f8fafc;color:#64748b;cursor:not-allowed;">
+                <span class="help-block">Auto-generated when saved</span>
             </div>
             <div class="form-group">
                 <button class="btn btn-danger" type="submit">
@@ -150,5 +147,22 @@
     }
 }
 
+// Live referral code preview
+const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomChars(n) {
+    let r = '';
+    for (let i = 0; i < n; i++) r += chars[Math.floor(Math.random() * chars.length)];
+    return r;
+}
+function updateReferralPreview() {
+    const mobile = document.getElementById('mobile_number').value.replace(/\D/g, '');
+    const last4 = mobile.length >= 4 ? mobile.slice(-4) : mobile.padStart(4, '0');
+    document.getElementById('referral_code').value = 'UTL' + last4 + randomChars(4);
+}
+const mobileInput = document.getElementById('mobile_number');
+if (mobileInput) {
+    mobileInput.addEventListener('input', updateReferralPreview);
+    updateReferralPreview();
+}
 </script>
 @endsection

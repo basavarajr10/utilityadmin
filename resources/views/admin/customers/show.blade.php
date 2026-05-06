@@ -29,8 +29,8 @@
                         </th>
                         <td>
                             @if($customer->profile_photo)
-                                <a href="{{ $customer->profile_photo->getUrl() }}" target="_blank" style="display: inline-block">
-                                    <img src="{{ $customer->profile_photo->getUrl('thumb') }}">
+                                <a href="{{ $customer->profile_photo->url }}" target="_blank" style="display: inline-block">
+                                    <img src="{{ $customer->profile_photo->thumbnail ?? $customer->profile_photo->url }}" style="max-width:80px;">
                                 </a>
                             @endif
                         </td>

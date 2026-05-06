@@ -42,10 +42,28 @@ class KycRequest extends Model implements HasMedia
         'rejected' => 'Rejected',
     ];
 
+    public const DOC_STATUS_SELECT = [
+        'pending'  => 'Pending',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+    ];
+
     protected $fillable = [
         'customer_id',
         'aadhaar_number',
         'pan_number',
+        'aadhaar_front',
+        'aadhaar_front_status',
+        'aadhaar_front_note',
+        'aadhaar_back',
+        'aadhaar_back_status',
+        'aadhaar_back_note',
+        'pan_image',
+        'pan_image_status',
+        'pan_image_note',
+        'selfie',
+        'selfie_status',
+        'selfie_note',
         'status',
         'reviewer_note',
         'reviewed_at',
@@ -77,33 +95,75 @@ class KycRequest extends Model implements HasMedia
             $file->url       = $file->getUrl();
             $file->thumbnail = $file->getUrl('thumb');
             $file->preview   = $file->getUrl('preview');
+            return $file;
         }
 
-        return $file;
+        $filename = $this->attributes['selfie'] ?? null;
+        if ($filename) {
+            $url = config('app.url') . '/storage/kyc/' . $filename;
+            $obj = new \stdClass();
+            $obj->url       = $url;
+            $obj->thumbnail = $url;
+            $obj->preview   = $url;
+            $obj->file_name = $filename;
+            return $obj;
+        }
+
+        return null;
     }
 
     public function getAadhaarDocAttribute()
     {
         $files = $this->getMedia('aadhaar_doc');
-        $files->each(function ($item) {
-            $item->url       = $item->getUrl();
-            $item->thumbnail = $item->getUrl('thumb');
-            $item->preview   = $item->getUrl('preview');
-        });
+        if ($files->isNotEmpty()) {
+            $files->each(function ($item) {
+                $item->url       = $item->getUrl();
+                $item->thumbnail = $item->getUrl('thumb');
+                $item->preview   = $item->getUrl('preview');
+            });
+            return $files;
+        }
 
-        return $files;
+        $results = collect();
+        foreach (['aadhaar_front', 'aadhaar_back'] as $col) {
+            $filename = $this->attributes[$col] ?? null;
+            if ($filename) {
+                $url = config('app.url') . '/storage/kyc/' . $filename;
+                $obj = new \stdClass();
+                $obj->url       = $url;
+                $obj->thumbnail = $url;
+                $obj->preview   = $url;
+                $obj->file_name = $filename;
+                $results->push($obj);
+            }
+        }
+        return $results;
     }
 
     public function getPanDocAttribute()
     {
         $files = $this->getMedia('pan_doc');
-        $files->each(function ($item) {
-            $item->url       = $item->getUrl();
-            $item->thumbnail = $item->getUrl('thumb');
-            $item->preview   = $item->getUrl('preview');
-        });
+        if ($files->isNotEmpty()) {
+            $files->each(function ($item) {
+                $item->url       = $item->getUrl();
+                $item->thumbnail = $item->getUrl('thumb');
+                $item->preview   = $item->getUrl('preview');
+            });
+            return $files;
+        }
 
-        return $files;
+        $results = collect();
+        $filename = $this->attributes['pan_image'] ?? null;
+        if ($filename) {
+            $url = config('app.url') . '/storage/kyc/' . $filename;
+            $obj = new \stdClass();
+            $obj->url       = $url;
+            $obj->thumbnail = $url;
+            $obj->preview   = $url;
+            $obj->file_name = $filename;
+            $results->push($obj);
+        }
+        return $results;
     }
 
     public function getReviewedAtAttribute($value)

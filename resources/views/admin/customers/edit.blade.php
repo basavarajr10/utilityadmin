@@ -85,7 +85,7 @@
             </div>
             <div class="form-group">
                 <label for="referral_code">{{ trans('cruds.customer.fields.referral_code') }}</label>
-                <input class="form-control {{ $errors->has('referral_code') ? 'is-invalid' : '' }}" type="text" name="referral_code" id="referral_code" value="{{ old('referral_code', $customer->referral_code) }}">
+                <input class="form-control" type="text" name="referral_code" id="referral_code" value="{{ old('referral_code', $customer->referral_code) }}" readonly style="background:#f8fafc;color:#64748b;cursor:not-allowed;">
                 @if($errors->has('referral_code'))
                     <span class="text-danger">{{ $errors->first('referral_code') }}</span>
                 @endif

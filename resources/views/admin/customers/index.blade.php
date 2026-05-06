@@ -94,7 +94,7 @@
                     <th>{{ trans('cruds.customer.fields.kyc_status') }}</th>
                     <th>{{ trans('cruds.customer.fields.is_active') }}</th>
                     <th>{{ trans('cruds.customer.fields.referral_code') }}</th>
-                    <th>&nbsp;</th>
+                    <th>{{ trans('global.actions') }}</th>
                 </tr>
                 <tr>
                     <td></td>

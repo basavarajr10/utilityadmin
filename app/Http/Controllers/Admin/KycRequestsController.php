@@ -70,23 +70,23 @@ class KycRequestsController extends Controller
                 return '';
             });
             $table->editColumn('aadhaar_doc', function ($row) {
-                if (! $row->aadhaar_doc) {
+                if (! $row->aadhaar_doc || $row->aadhaar_doc->isEmpty()) {
                     return '';
                 }
                 $links = [];
                 foreach ($row->aadhaar_doc as $media) {
-                    $links[] = '<a href="' . $media->getUrl() . '" target="_blank"><img src="' . $media->getUrl('thumb') . '" width="50px" height="50px"></a>';
+                    $links[] = '<a href="' . $media->url . '" target="_blank"><img src="' . ($media->thumbnail ?? $media->url) . '" width="50px" height="50px"></a>';
                 }
 
                 return implode(' ', $links);
             });
             $table->editColumn('pan_doc', function ($row) {
-                if (! $row->pan_doc) {
+                if (! $row->pan_doc || $row->pan_doc->isEmpty()) {
                     return '';
                 }
                 $links = [];
                 foreach ($row->pan_doc as $media) {
-                    $links[] = '<a href="' . $media->getUrl() . '" target="_blank"><img src="' . $media->getUrl('thumb') . '" width="50px" height="50px"></a>';
+                    $links[] = '<a href="' . $media->url . '" target="_blank"><img src="' . ($media->thumbnail ?? $media->url) . '" width="50px" height="50px"></a>';
                 }
 
                 return implode(' ', $links);
@@ -119,15 +119,21 @@ class KycRequestsController extends Controller
         $kycRequest = KycRequest::create($request->all());
 
         if ($request->input('selfie', false)) {
-            $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($request->input('selfie'))))->toMediaCollection('selfie');
+            $media = $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($request->input('selfie'))))->toMediaCollection('selfie');
+            $kycRequest->updateQuietly(['selfie' => $media->file_name]);
         }
 
-        foreach ($request->input('aadhaar_doc', []) as $file) {
-            $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('aadhaar_doc');
+        $aadhaarFiles = $request->input('aadhaar_doc', []);
+        foreach ($aadhaarFiles as $index => $file) {
+            $media = $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('aadhaar_doc');
+            $col = $index === 0 ? 'aadhaar_front' : 'aadhaar_back';
+            $kycRequest->updateQuietly([$col => $media->file_name]);
         }
 
-        foreach ($request->input('pan_doc', []) as $file) {
-            $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('pan_doc');
+        $panFiles = $request->input('pan_doc', []);
+        foreach ($panFiles as $file) {
+            $media = $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('pan_doc');
+            $kycRequest->updateQuietly(['pan_image' => $media->file_name]);
         }
 
         if ($media = $request->input('ck-media', false)) {
@@ -152,42 +158,83 @@ class KycRequestsController extends Controller
     {
         $kycRequest->update($request->all());
 
-        if ($request->input('selfie', false)) {
-            if (! $kycRequest->selfie || $request->input('selfie') !== $kycRequest->selfie->file_name) {
-                if ($kycRequest->selfie) {
-                    $kycRequest->selfie->delete();
-                }
-                $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($request->input('selfie'))))->toMediaCollection('selfie');
-            }
-        } elseif ($kycRequest->selfie) {
-            $kycRequest->selfie->delete();
+        // Auto-derive overall status from per-doc statuses
+        $docStatuses = [
+            $request->input('selfie_status', $kycRequest->selfie_status),
+            $request->input('aadhaar_front_status', $kycRequest->aadhaar_front_status),
+            $request->input('aadhaar_back_status', $kycRequest->aadhaar_back_status),
+            $request->input('pan_image_status', $kycRequest->pan_image_status),
+        ];
+        if (in_array('rejected', $docStatuses)) {
+            $derivedStatus = 'rejected';
+        } elseif (count(array_filter($docStatuses, fn($s) => $s === 'approved')) === count($docStatuses)) {
+            $derivedStatus = 'approved';
+        } else {
+            $derivedStatus = 'pending';
+        }
+        $kycRequest->updateQuietly([
+            'status'      => $derivedStatus,
+            'reviewed_at' => now()->format(config('panel.date_format') . ' ' . config('panel.time_format')),
+        ]);
+
+        if ($kycRequest->customer_id) {
+            Customer::where('id', $kycRequest->customer_id)->update(['kyc_status' => $derivedStatus]);
         }
 
-        if (count($kycRequest->aadhaar_doc) > 0) {
-            foreach ($kycRequest->aadhaar_doc as $media) {
+        $selfieMedia = $kycRequest->getMedia('selfie');
+        if ($request->input('selfie', false)) {
+            $currentFileName = $selfieMedia->last()?->file_name;
+            if (! $currentFileName || $request->input('selfie') !== $currentFileName) {
+                $tmpPath = storage_path('tmp/uploads/' . basename($request->input('selfie')));
+                if (file_exists($tmpPath)) {
+                    if ($selfieMedia->count()) {
+                        $selfieMedia->last()->delete();
+                    }
+                    $media = $kycRequest->addMedia($tmpPath)->toMediaCollection('selfie');
+                    $kycRequest->updateQuietly(['selfie' => $media->file_name]);
+                }
+            }
+        } elseif ($selfieMedia->count()) {
+            $selfieMedia->last()->delete();
+            $kycRequest->updateQuietly(['selfie' => null]);
+        }
+
+        $existingAadhaar = $kycRequest->getMedia('aadhaar_doc');
+        if ($existingAadhaar->count() > 0) {
+            foreach ($existingAadhaar as $media) {
                 if (! in_array($media->file_name, $request->input('aadhaar_doc', []))) {
                     $media->delete();
                 }
             }
         }
-        $media = $kycRequest->aadhaar_doc->pluck('file_name')->toArray();
-        foreach ($request->input('aadhaar_doc', []) as $file) {
-            if (count($media) === 0 || ! in_array($file, $media)) {
-                $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('aadhaar_doc');
+        $existingAadhaarNames = $kycRequest->getMedia('aadhaar_doc')->pluck('file_name')->toArray();
+        foreach ($request->input('aadhaar_doc', []) as $index => $file) {
+            if (! in_array($file, $existingAadhaarNames)) {
+                $tmpPath = storage_path('tmp/uploads/' . basename($file));
+                if (file_exists($tmpPath)) {
+                    $media = $kycRequest->addMedia($tmpPath)->toMediaCollection('aadhaar_doc');
+                    $col = $index === 0 ? 'aadhaar_front' : 'aadhaar_back';
+                    $kycRequest->updateQuietly([$col => $media->file_name]);
+                }
             }
         }
 
-        if (count($kycRequest->pan_doc) > 0) {
-            foreach ($kycRequest->pan_doc as $media) {
+        $existingPan = $kycRequest->getMedia('pan_doc');
+        if ($existingPan->count() > 0) {
+            foreach ($existingPan as $media) {
                 if (! in_array($media->file_name, $request->input('pan_doc', []))) {
                     $media->delete();
                 }
             }
         }
-        $media = $kycRequest->pan_doc->pluck('file_name')->toArray();
+        $existingPanNames = $kycRequest->getMedia('pan_doc')->pluck('file_name')->toArray();
         foreach ($request->input('pan_doc', []) as $file) {
-            if (count($media) === 0 || ! in_array($file, $media)) {
-                $kycRequest->addMedia(storage_path('tmp/uploads/' . basename($file)))->toMediaCollection('pan_doc');
+            if (! in_array($file, $existingPanNames)) {
+                $tmpPath = storage_path('tmp/uploads/' . basename($file));
+                if (file_exists($tmpPath)) {
+                    $media = $kycRequest->addMedia($tmpPath)->toMediaCollection('pan_doc');
+                    $kycRequest->updateQuietly(['pan_image' => $media->file_name]);
+                }
             }
         }
 

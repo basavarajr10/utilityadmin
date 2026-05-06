@@ -120,6 +120,15 @@
                 </li>
                 @endcan
 
+                @can('user_alert_access')
+                <li class="nav-item">
+                    <a href="{{ route('admin.user-alerts.index') }}" class="nav-link {{ request()->is('admin/user-alerts*') ? 'active' : '' }}">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <p>{{ trans('cruds.userAlert.title') }}</p>
+                    </a>
+                </li>
+                @endcan
+
                 @can('notification_access')
                 <li class="nav-item">
                     <a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->is('admin/notifications*') ? 'active' : '' }}">

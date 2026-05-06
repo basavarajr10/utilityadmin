@@ -73,22 +73,22 @@
                                 </td>
                                 <td>
                                     @if($kycRequest->selfie)
-                                        <a href="{{ $kycRequest->selfie->getUrl() }}" target="_blank" style="display: inline-block">
-                                            <img src="{{ $kycRequest->selfie->getUrl('thumb') }}">
+                                        <a href="{{ $kycRequest->selfie->url }}" target="_blank" style="display: inline-block">
+                                            <img src="{{ $kycRequest->selfie->thumbnail ?? $kycRequest->selfie->url }}" style="max-width:60px;">
                                         </a>
                                     @endif
                                 </td>
                                 <td>
                                     @foreach($kycRequest->aadhaar_doc as $key => $media)
-                                        <a href="{{ $media->getUrl() }}" target="_blank" style="display: inline-block">
-                                            <img src="{{ $media->getUrl('thumb') }}">
+                                        <a href="{{ $media->url }}" target="_blank" style="display: inline-block">
+                                            <img src="{{ $media->thumbnail ?? $media->url }}" style="max-width:60px;">
                                         </a>
                                     @endforeach
                                 </td>
                                 <td>
                                     @foreach($kycRequest->pan_doc as $key => $media)
-                                        <a href="{{ $media->getUrl() }}" target="_blank" style="display: inline-block">
-                                            <img src="{{ $media->getUrl('thumb') }}">
+                                        <a href="{{ $media->url }}" target="_blank" style="display: inline-block">
+                                            <img src="{{ $media->thumbnail ?? $media->url }}" style="max-width:60px;">
                                         </a>
                                     @endforeach
                                 </td>

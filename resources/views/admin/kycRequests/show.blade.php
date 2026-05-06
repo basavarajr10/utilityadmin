@@ -48,65 +48,71 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.selfie') }}
-                        </th>
+                        <th>Overall Status</th>
                         <td>
-                            @if($kycRequest->selfie)
-                                <a href="{{ $kycRequest->selfie->getUrl() }}" target="_blank" style="display: inline-block">
-                                    <img src="{{ $kycRequest->selfie->getUrl('thumb') }}">
+                            @php $s = $kycRequest->status; @endphp
+                            <span class="badge badge-{{ $s === 'approved' ? 'success' : ($s === 'rejected' ? 'danger' : 'warning') }}">
+                                {{ App\Models\KycRequest::STATUS_SELECT[$s] ?? $s }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Reviewed At</th>
+                        <td>{{ $kycRequest->reviewed_at }}</td>
+                    </tr>
+                    <tr>
+                        <th>Reviewer Note</th>
+                        <td>{{ strip_tags($kycRequest->reviewer_note ?? '') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {{-- Per-document status table --}}
+            <h5 class="mt-4">Document Review</h5>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                    $docs = [
+                        ['label' => 'Selfie',        'img' => $kycRequest->selfie,        'status' => $kycRequest->selfie_status,        'note' => $kycRequest->selfie_note],
+                        ['label' => 'Aadhaar Front', 'img' => null,                        'status' => $kycRequest->aadhaar_front_status, 'note' => $kycRequest->aadhaar_front_note],
+                        ['label' => 'Aadhaar Back',  'img' => null,                        'status' => $kycRequest->aadhaar_back_status,  'note' => $kycRequest->aadhaar_back_note],
+                        ['label' => 'PAN Image',     'img' => null,                        'status' => $kycRequest->pan_image_status,     'note' => $kycRequest->pan_image_note],
+                    ];
+                    $aadhaarImgs = $kycRequest->aadhaar_doc;
+                    $panImgs     = $kycRequest->pan_doc;
+                    $docs[1]['img'] = $aadhaarImgs[0] ?? null;
+                    $docs[2]['img'] = $aadhaarImgs[1] ?? null;
+                    $docs[3]['img'] = $panImgs[0] ?? null;
+                    @endphp
+                    @foreach($docs as $doc)
+                    <tr>
+                        <td>{{ $doc['label'] }}</td>
+                        <td>
+                            @if($doc['img'])
+                                <a href="{{ $doc['img']->url }}" target="_blank">
+                                    <img src="{{ $doc['img']->thumbnail ?? $doc['img']->url }}" style="max-width:60px;">
                                 </a>
+                            @else
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.aadhaar_doc') }}
-                        </th>
                         <td>
-                            @foreach($kycRequest->aadhaar_doc as $key => $media)
-                                <a href="{{ $media->getUrl() }}" target="_blank" style="display: inline-block">
-                                    <img src="{{ $media->getUrl('thumb') }}">
-                                </a>
-                            @endforeach
+                            @php $ds = $doc['status'] ?? 'pending'; @endphp
+                            <span class="badge badge-{{ $ds === 'approved' ? 'success' : ($ds === 'rejected' ? 'danger' : 'warning') }}">
+                                {{ ucfirst($ds) }}
+                            </span>
                         </td>
+                        <td>{{ $doc['note'] ?? '—' }}</td>
                     </tr>
-                    <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.pan_doc') }}
-                        </th>
-                        <td>
-                            @foreach($kycRequest->pan_doc as $key => $media)
-                                <a href="{{ $media->getUrl() }}" target="_blank" style="display: inline-block">
-                                    <img src="{{ $media->getUrl('thumb') }}">
-                                </a>
-                            @endforeach
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.status') }}
-                        </th>
-                        <td>
-                            {{ App\Models\KycRequest::STATUS_SELECT[$kycRequest->status] ?? '' }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.reviewer_note') }}
-                        </th>
-                        <td>
-                            {!! $kycRequest->reviewer_note !!}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            {{ trans('cruds.kycRequest.fields.reviewed_at') }}
-                        </th>
-                        <td>
-                            {{ $kycRequest->reviewed_at }}
-                        </td>
-                    </tr>
+                    @endforeach
                 </tbody>
             </table>
             <div class="form-group">

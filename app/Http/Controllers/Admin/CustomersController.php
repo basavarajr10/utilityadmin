@@ -100,10 +100,22 @@ class CustomersController extends Controller
 
     public function store(StoreCustomerRequest $request)
     {
-        $customer = Customer::create($request->all());
+        $data = $request->all();
+        if (empty($data['referral_code'])) {
+            $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            $last4 = substr(preg_replace('/\D/', '', $data['mobile_number'] ?? '0000'), -4);
+            do {
+                $random = '';
+                for ($i = 0; $i < 4; $i++) $random .= $chars[random_int(0, strlen($chars) - 1)];
+                $data['referral_code'] = 'UTL' . $last4 . $random;
+            } while (Customer::where('referral_code', $data['referral_code'])->exists());
+        }
+
+        $customer = Customer::create($data);
 
         if ($request->input('profile_photo', false)) {
-            $customer->addMedia(storage_path('tmp/uploads/' . basename($request->input('profile_photo'))))->toMediaCollection('profile_photo');
+            $media = $customer->addMedia(storage_path('tmp/uploads/' . basename($request->input('profile_photo'))))->toMediaCollection('profile_photo');
+            $customer->updateQuietly(['profile_photo' => $media->file_name]);
         }
 
         if ($media = $request->input('ck-media', false)) {
@@ -122,17 +134,20 @@ class CustomersController extends Controller
 
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $customer->update($request->all());
+        $data = $request->except('referral_code');
+        $customer->update($data);
 
         if ($request->input('profile_photo', false)) {
             if (! $customer->profile_photo || $request->input('profile_photo') !== $customer->profile_photo->file_name) {
-                if ($customer->profile_photo) {
+                if ($customer->getMedia('profile_photo')->count()) {
                     $customer->profile_photo->delete();
                 }
-                $customer->addMedia(storage_path('tmp/uploads/' . basename($request->input('profile_photo'))))->toMediaCollection('profile_photo');
+                $media = $customer->addMedia(storage_path('tmp/uploads/' . basename($request->input('profile_photo'))))->toMediaCollection('profile_photo');
+                $customer->updateQuietly(['profile_photo' => $media->file_name]);
             }
-        } elseif ($customer->profile_photo) {
+        } elseif ($customer->getMedia('profile_photo')->count()) {
             $customer->profile_photo->delete();
+            $customer->updateQuietly(['profile_photo' => null]);
         }
 
         return redirect()->route('admin.customers.index');

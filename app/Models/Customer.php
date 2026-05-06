@@ -57,6 +57,8 @@ class Customer extends Model implements HasMedia
         'is_active',
         'device_token',
         'referral_code',
+        'referred_by',
+        'profile_photo',
         'last_login',
         'created_at',
         'updated_at',
@@ -116,14 +118,30 @@ class Customer extends Model implements HasMedia
 
     public function getProfilePhotoAttribute()
     {
+        // Try Spatie media first, fall back to Node's direct column value
         $file = $this->getMedia('profile_photo')->last();
         if ($file) {
             $file->url       = $file->getUrl();
             $file->thumbnail = $file->getUrl('thumb');
             $file->preview   = $file->getUrl('preview');
+            return $file;
         }
 
-        return $file;
+        // Return Node-uploaded filename as object matching Spatie media structure
+        $filename = $this->attributes['profile_photo'] ?? null;
+        if ($filename) {
+            $url = config('app.url') . '/storage/profiles/' . $filename;
+            $obj = new \stdClass();
+            $obj->url         = $url;
+            $obj->thumbnail   = $url;
+            $obj->preview     = $url;
+            $obj->preview_url = $url;
+            $obj->file_name   = $filename;
+            $obj->name        = $filename;
+            return $obj;
+        }
+
+        return null;
     }
 
     public function getLastLoginAttribute($value)

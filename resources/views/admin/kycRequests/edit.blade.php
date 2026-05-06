@@ -65,34 +65,39 @@
                 @endif
                 <span class="help-block">{{ trans('cruds.kycRequest.fields.pan_doc_helper') }}</span>
             </div>
-            <div class="form-group">
-                <label>{{ trans('cruds.kycRequest.fields.status') }}</label>
-                <select class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}" name="status" id="status">
-                    <option value disabled {{ old('status', null) === null ? 'selected' : '' }}>{{ trans('global.pleaseSelect') }}</option>
-                    @foreach(App\Models\KycRequest::STATUS_SELECT as $key => $label)
-                        <option value="{{ $key }}" {{ old('status', $kycRequest->status) === (string) $key ? 'selected' : '' }}>{{ $label }}</option>
+            {{-- Per-document review --}}
+            <div class="card mt-3">
+                <div class="card-header font-weight-bold">Document Review</div>
+                <div class="card-body">
+                    @foreach([
+                        ['field' => 'selfie',        'label' => 'Selfie'],
+                        ['field' => 'aadhaar_front', 'label' => 'Aadhaar Front'],
+                        ['field' => 'aadhaar_back',  'label' => 'Aadhaar Back'],
+                        ['field' => 'pan_image',     'label' => 'PAN Image'],
+                    ] as $doc)
+                    <div class="row mb-3 align-items-start border-bottom pb-3">
+                        <div class="col-md-2 font-weight-bold pt-2">{{ $doc['label'] }}</div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="{{ $doc['field'] }}_status">
+                                @foreach(App\Models\KycRequest::DOC_STATUS_SELECT as $key => $label)
+                                    <option value="{{ $key }}" {{ old($doc['field'].'_status', $kycRequest->{$doc['field'].'_status'}) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <input type="text" class="form-control" name="{{ $doc['field'] }}_note"
+                                placeholder="Rejection reason (optional)"
+                                value="{{ old($doc['field'].'_note', $kycRequest->{$doc['field'].'_note'}) }}">
+                        </div>
+                    </div>
                     @endforeach
-                </select>
-                @if($errors->has('status'))
-                    <span class="text-danger">{{ $errors->first('status') }}</span>
-                @endif
-                <span class="help-block">{{ trans('cruds.kycRequest.fields.status_helper') }}</span>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="reviewer_note">{{ trans('cruds.kycRequest.fields.reviewer_note') }}</label>
-                <textarea class="form-control ckeditor {{ $errors->has('reviewer_note') ? 'is-invalid' : '' }}" name="reviewer_note" id="reviewer_note">{!! old('reviewer_note', $kycRequest->reviewer_note) !!}</textarea>
-                @if($errors->has('reviewer_note'))
-                    <span class="text-danger">{{ $errors->first('reviewer_note') }}</span>
-                @endif
-                <span class="help-block">{{ trans('cruds.kycRequest.fields.reviewer_note_helper') }}</span>
-            </div>
-            <div class="form-group">
-                <label for="reviewed_at">{{ trans('cruds.kycRequest.fields.reviewed_at') }}</label>
-                <input class="form-control datetime {{ $errors->has('reviewed_at') ? 'is-invalid' : '' }}" type="text" name="reviewed_at" id="reviewed_at" value="{{ old('reviewed_at', $kycRequest->reviewed_at) }}">
-                @if($errors->has('reviewed_at'))
-                    <span class="text-danger">{{ $errors->first('reviewed_at') }}</span>
-                @endif
-                <span class="help-block">{{ trans('cruds.kycRequest.fields.reviewed_at_helper') }}</span>
+            <p class="text-muted mt-2"><small>Overall status is auto-calculated: all approved → Approved, any rejected → Rejected, else Pending.</small></p>
+
+            <div class="form-group mt-3">
+                <label for="reviewer_note">Overall Reviewer Note</label>
+                <textarea class="form-control" name="reviewer_note" id="reviewer_note" rows="3">{{ old('reviewer_note', strip_tags($kycRequest->reviewer_note ?? '')) }}</textarea>
             </div>
             <div class="form-group">
                 <button class="btn btn-danger" type="submit">
